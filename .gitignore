@@ -1,3 +1,7 @@
 *~
 settings.ini
 wpt_batch_lib.py
+*.pyc
+*.log
+*.log.*
+*.sqlite

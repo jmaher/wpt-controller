@@ -8,8 +8,9 @@
 
 # from autophone's jobs.py
 import ConfigParser
+import datetime
+import json
 import logging
-import sqlite3
 import os
 import json
 import datetime
@@ -95,7 +96,18 @@ def application(environ, start_response):
         raise
 
     if jobrows:
-        currentteststable = "<table><caption>Current Tests</caption>"
+        currentteststable = (
+            "<table><caption>Current Tests</caption>" +
+            "<tr>" +
+            "<th>cancel</th>" +
+            "<th>job id</th><th>user email</th><th>build</th>" +
+            "<th>label</th><th>runs</th><th>tcpdump</th>" +
+            "<th>video</th><th>datazilla</th><th>prescript</th><th>postscript</th><th>status</th><th>started</th>" +
+            "<th>timestamp</th>" +
+            "<th>location</th>" +
+            "<th>speed</th>" +
+            "<th>url</th>" +
+            "</tr>")
 
     for jobrow in jobrows:
         (jobid, email, build, label, datazilla, jobtype, jobdata,
@@ -230,7 +242,11 @@ def wpthtml():
           <option value="Dial">56K Dial-Up (49/30 Kbps 120ms RTT)</option>
         </select>
         <p>
-          <label for="urls">URLS:</label>
+          <label for="url">Custom Url:</label>
+        </p>
+        <input id="urls" name="urls" type="text" size="80">
+        <p>
+          <label for="urls">Recorded Urls:</label>
         </p>"""
     html += ("<select id='urls' name='urls' size='" +
              str(len(jm.defaults['wpt']['default_urls'])) + "' multiple>" +
@@ -248,19 +264,24 @@ def wpthtml():
     html += """
         </select>
         <p>
-          <label for="script">Script:</label>
+          See <a href="https://sites.google.com/a/webpagetest.org/docs/using-webpagetest/scripting">Scripting
+          WebPagetest</a> for more information about scripting WebPagetest.
+          Use \\t to embed a tab in the text input.
         </p>
         <p>
-          See <a href="https://sites.google.com/a/webpagetest.org/docs/using-webpagetest/scripting">Scripting
-          WebPagetest</a> for more information. Use \\t to embed a tab in the text input.
+          <label for="prescript">Pre Script:</label> Executed prior to page load. Use for preferences, etc.
         </p>
-        <textarea name="script" cols="80" rows="6"></textarea>
+        <textarea name="prescript" cols="80" rows="6"></textarea>
+        <p>
+          <label for="postscript">Post Script:</label> Executed after page load.
+        </p>
+        <textarea name="postscript" cols="80" rows="6"></textarea>
+        %s
         <p>
           <input type="hidden" name="jobtype" value="wpt" />
           <input type="submit" value="Submit">
         </p>
         </form>
-        %s
     </div>
   </body>
 </html>

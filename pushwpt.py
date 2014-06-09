@@ -110,14 +110,23 @@ class WptOptions(optparse.OptionParser):
                         help="Label of the machine to test, default: user-test")
         defaults["label"] = "user-test"
 
-        self.add_option("--script",
-                        action="store", dest="script",
-                        help="WebPagetest script to execute, default: None. "
+        self.add_option("--prescript",
+                        action="store", dest="prescript",
+                        help="WebPagetest script to execute prior to page naviation, default: None. "
                         "Use \\t to embed tabs and \\n to embed newlines "
                         "in the script. "
                         "See https://sites.google.com/a/webpagetest.org/docs/using-webpagetest/scripting "
                         "for more information on scripting WebPagetest.")
-        defaults["script"] = ""
+        defaults["prescript"] = ""
+
+        self.add_option("--postscript",
+                        action="store", dest="postscript",
+                        help="WebPagetest script to execute after to page naviation, default: None. "
+                        "Use \\t to embed tabs and \\n to embed newlines "
+                        "in the script. "
+                        "See https://sites.google.com/a/webpagetest.org/docs/using-webpagetest/scripting "
+                        "for more information on scripting WebPagetest.")
+        defaults["postscript"] = ""
 
         self.set_defaults(**defaults)
         usage = """
@@ -128,8 +137,8 @@ class WptOptions(optparse.OptionParser):
 
     def verifyOptions(self, options):
         if options.build:
-            if options.revision or options.username:
-                print "ERROR: if you are specifying a specific build, you cannot specify a revision and username"
+            if options.revision:
+                print "ERROR: if you are specifying a specific build, you cannot specify a revision."
                 sys.exit(1)
 
             # http://people.mozilla.org/~jmaher/firefox-24.win32.exe
@@ -139,7 +148,7 @@ class WptOptions(optparse.OptionParser):
                 sys.exit(1)
 
             # verify build exists
-            server = 'http://people.mozilla.org'
+            server = 'people.mozilla.org'
             path = options.build.split(server)[-1]
             conn = httplib.HTTPConnection(server)
             conn.request('HEAD', path)
@@ -223,8 +232,9 @@ def postToWPTQueue(options):
                 'email': [options.username],
                 'build': [options.build],
                 'label': [options.label],
-                'script': [options.script],
-                'runs': options.runs,
+                'prescript': [options.prescript],
+                'postscript': [options.postscript],
+                'runs': [options.runs],
                 'tcpdump': [''] if options.no_tcpdump else ['on'],
                 'video': [''] if options.no_video else ['on'],
                 'datazilla': ['on'] if options.datazilla else [''],

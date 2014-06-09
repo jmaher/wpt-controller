@@ -1,0 +1,23 @@
+these are the remaining items for me to do on this:
+* cleanup the TODO statements in the code
+* finish the refactoring of jobtype/jobdata
+** this means the UI for jobs to have a smarter interface that will toggle between the fields
+** this means we can post jobs of each type via the api and put them in the scheduler
+
+* make the power benchmark program launch
+* figure out a way to monitor the progress of a power job
+* figure out a way to ensure we only run one power job at a time
+* figure out a way to report the results of the power job (right now it is all reported from the client?)
+** can this be pulled to wpt-controller and emailed out as a summary
+
+* verify dependencies
+* verify push from the api works
+* figure out the proper benchmarks we can run, i.e. bla (doesn't work), power gadget (not really working), and other methods
+
+* what is working
+** installation of builds (entered through the webUI running in --jobtype=power mode)
+*** this is done via editing config.json and sending that to benchmark.py program
+** jobs in queue, dequeued once *ran* (although running doesn't do anything)
+** manually kicking off jobs via python benchmark --is-dispatcher launches on client
+
+

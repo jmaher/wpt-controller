@@ -164,6 +164,12 @@ class JobMonitor(Daemon):
             automatic_job["datazilla"] = config.get(job_name, "datazilla")
             automatic_job["hour"] = config.getint(job_name, "hour")
 
+            # this is power specific
+            automatic_job["jobtype"] = jobtype
+
+            # TODO: how to make this a json object instead of a string
+            automatic_job["jobdata"] = "{}"
+
             """
             # TODO: JMAHER: specifc to WPT, we need to make config.get use jobtype specifics
             automatic_job["jobtype"] = "web-page-test"
@@ -240,6 +246,7 @@ class JobMonitor(Daemon):
         self.set_job(None, email, build, label, jobtype, jobdata, datazilla,
                      None, None, None)
         try:
+            print "JMAHER: insert into jobs: '%s', '%s', '%s', '%s', '%s', '%s', waiting, %s" % (email, build, label, jobtype, jobdata, datazilla, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
             self.cursor.execute(
                 "insert into jobs(email, build, label, jobtype, jobdata, "
                 "datazilla, status, started) "

@@ -2,6 +2,8 @@ from monitor import JobMonitor
 from optparse import OptionParser
 import os
 import time
+import json
+import subprocess
 
 class PowerMonitor(JobMonitor):
 
@@ -11,10 +13,14 @@ class PowerMonitor(JobMonitor):
                 pconfig = json.load(f)
 
             with open(self.powerconfig, 'w') as f:
+                iter = 0
                 for product in pconfig["OS"]["Windows"]:
-                    if pconfig["OS"]["Windows"][product]["name"] == "Firefox":
-                        pconfig["OS"]["Windows"][product]["url"] = self.job.build
+                    if product["name"] == "Firefox":
+                        pconfig["OS"]["Windows"][iter]["url"] = self.job.build
+                    iter = iter + 1
                 json.dump(pconfig, f)
+                print "dumped out json: %s" % json.dump
+                return True
         except IOError:
             self.notify_admin_exception("Error writing file: %s" % self.powerconfig)
             self.notify_user_exception(self.job.email, "job failed")
@@ -28,7 +34,7 @@ class PowerMonitor(JobMonitor):
 
         #TODO: we need to queue these up somehow- launch one at a time and make this serial
         print "JMAHER: in process details going to launch benchmark.py"
-        p = subprocess.Popen(['python', 'benchmark.py', '--is_dispatcher'], cwd='/home/jmaher/mozilla/power_logger', shell=True)
+        p = subprocess.Popen(['python', 'benchmark.py', '--is_dispatcher'], cwd='/home/jmaher/mozilla/power_logger', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print "launched"
         print p.communicate()[0]
 

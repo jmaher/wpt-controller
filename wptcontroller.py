@@ -96,18 +96,7 @@ def application(environ, start_response):
         raise
 
     if jobrows:
-        currentteststable = (
-            "<table><caption>Current Tests</caption>" +
-            "<tr>" +
-            "<th>cancel</th>" +
-            "<th>job id</th><th>user email</th><th>build</th>" +
-            "<th>label</th><th>runs</th><th>tcpdump</th>" +
-            "<th>video</th><th>datazilla</th><th>prescript</th><th>postscript</th><th>status</th><th>started</th>" +
-            "<th>timestamp</th>" +
-            "<th>location</th>" +
-            "<th>speed</th>" +
-            "<th>url</th>" +
-            "</tr>")
+        currentteststable = ("<table><caption>Current Tests</caption>")
 
     for jobrow in jobrows:
         (jobid, email, build, label, datazilla, jobtype, jobdata,

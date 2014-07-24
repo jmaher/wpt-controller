@@ -5,9 +5,15 @@ time_limit = 120
 port = 8051
 sleep_time = 60
 check_minutes = 5
+
+[wpt_server]
 api_key = wptapikey
-firefoxpath = /var/www/webpagetest/installers/browsers/firefox-installer.exe
-firefoxdatpath = /var/www/webpagetest/installers/browsers/firefox.dat
+firefoxpath = /home/mozauto/power_logger/firefox-installer.exe
+firefoxdatpath = /home/mozauto/power_logger/browsers/firefox.dat
+
+[power_server]
+powerconfig = /home/mozauto/power_logger/config.json
+powerprogram = /home/mozauto/power_logger/benchmark.py
 
 [mail]
 username = mailer@example.com
@@ -23,20 +29,27 @@ admin_loglevel = DEBUG
 oauth_consumer_key = <guid>
 oauth_consumer_secret = <guid>
 
-[defaults]
+[wpt_defaults]
 locations = wpt-win60w:Firefox, wpt-win60w:IE, wpt-win60w:Chrome
 urls = http://cnn.com/,http://www.yahoo.com/,http://www.mozilla.org/,http://www.amazon.com,http://baidu.com,http://yahoo.co.jp
 
 [automatic]
-jobs=job_nightly
+jobs=power_job_nightly
 
-[job_nightly]
+[power_job_nightly]
+type=power
+email=wpt@example.com
+label=Nightly
+build=http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/
+datazilla=off
+hour=8
+
+[wpt_job_nightly]
+type=wpt
 email=wpt@example.com
 label=Nightly
 build=http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/
 urls=http://cnn.com/,http://www.yahoo.com/,http://www.mozilla.org/,https://facebook.com/,https://gmail.com/,http://pinterest.com/all/
-prescript=firefoxPref\tgeneral.useragent.override\t"Some User Agent String"
-scripts=cnn.wps,yahoo.wps,mozilla.wps,facebook.wps,gmail.wps,pinterest.wps
 locations=bc-win61i32-bldw:Firefox
 speeds=Broadband,ModernMobile,ClassicMobile
 runs=3

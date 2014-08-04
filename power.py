@@ -4,6 +4,7 @@ import os
 import time
 import json
 import subprocess
+from dzclient import DatazillaRequest, DatazillaResult
 
 class PowerMonitor(JobMonitor):
 
@@ -33,9 +34,9 @@ class PowerMonitor(JobMonitor):
         #TODO: JMAHER: we need to get cwd in from a config file
         p = subprocess.Popen(['python3', 'benchmark.py', '--is_dispatcher'], cwd='/home/mozauto/power_logger', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print p.communicate()[0]
+        self.process_test_results()
 
-    def process_test_results(self, location, test_speed_map, test_url_map,
-                             test_msg_map, messages):
+    def process_test_results(self):
         """Process test results, notifying user of the results.
         """
         build_name = ""
@@ -44,6 +45,7 @@ class PowerMonitor(JobMonitor):
         build_id = ""
         build_branch = ""
 
+        self.post_to_datazilla()
 
         if build_name:
             msg_body += "%s %s %s id: %s revision: %s\n\n" % (build_name,
@@ -52,19 +54,9 @@ class PowerMonitor(JobMonitor):
                                                               build_id,
                                                               build_revision)
 
-        msg_body_keys = msg_body_map.keys()
-        msg_body_keys.sort()
-        if len(msg_body_keys) == 0:
-            messages += "No results were found."
-        else:
-            for msg_body_key in msg_body_keys:
-                msg_body += msg_body_map[msg_body_key]
-        if messages:
-            msg_body += "\n\n%s\n" % messages
-        self.notify_user_info(self.job.email, msg_subject, msg_body)
 
     #TODO: JMAHER: extract this out as data model for wpt is specific
-    def post_to_datazilla(self, test_result):
+    def post_to_datazilla(self):
         """ take test_results (json) and upload them to datazilla """
 
         # We will attach wpt_data to the datazilla result as a top
@@ -76,7 +68,16 @@ class PowerMonitor(JobMonitor):
             # before returning.
             submit_results = True
 
+        print "JMAHER:  inside post_to_datazilla, submit_results: %s" % submit_results
+
         result = DatazillaResult()
+        suite_name = "PowerGadget"
+        machine_name = "perf-windows-003"
+        os_name = "Win7"
+        os_version = "7"
+        platform = "Windows"
+        print "JMAHER: created DatazillaResult"
+        
         result.add_testsuite(suite_name)
         #TODO: JMAHER: hardcoded microperf here, this project should be in a config file and a real name
         request = DatazillaRequest("https",
@@ -93,10 +94,17 @@ class PowerMonitor(JobMonitor):
                                    revision=self.build_revision,
                                    branch=self.build_branch,
                                    id=self.build_id)
+
+        with open('/home/mozauto/power_logger/report.csv', 'r') as fHandle:
+            data = fHandle.readLines()
+
+        for line in data:
+            result.add_test_results(suite_name, line[12], line[13])
+
+        print "JMAHER: created datazilla request!"
         request.add_datazilla_result(result)
         datasets = request.datasets()
         for dataset in datasets:
-            dataset["wpt_data"] = wpt_data
             if not submit_results:
                 continue
             response = request.send(dataset)

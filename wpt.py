@@ -1,5 +1,6 @@
 from monitor import JobMonitor
 import random
+from dzclient import DatazillaRequest, DatazillaResult
 
 class WPTMonitor(JobMonitor):
 

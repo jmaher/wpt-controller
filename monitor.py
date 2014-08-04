@@ -5,7 +5,6 @@
 
 import ConfigParser
 import datetime
-import httplib2
 import json
 import logging
 #import md5
@@ -17,11 +16,8 @@ import sqlite3
 import subprocess
 import tempfile
 import time
-import urllib
-
-from dzclient import DatazillaRequest, DatazillaResult
-
-import BeautifulSoup
+import urllib2
+from bs4 import BeautifulSoup
 
 from logging.handlers import TimedRotatingFileHandler
 from emailhandler import SMTPHandler
@@ -235,7 +231,6 @@ class JobMonitor(Daemon):
         try:
             self.job = Job(self, jobid, email, build, label, jobtype, jobdata,
                            datazilla, status, started, timestamp)
-            print "JMAHER: set_job, here is the jobtype: %s" % self.job.jobtype
         except:
             self.notify_admin_exception("Error setting job")
             self.notify_user_exception(self.job.email,
@@ -246,7 +241,6 @@ class JobMonitor(Daemon):
         self.set_job(None, email, build, label, jobtype, jobdata, datazilla,
                      None, None, None)
         try:
-            print "JMAHER: insert into jobs: '%s', '%s', '%s', '%s', '%s', '%s', waiting, %s" % (email, build, label, jobtype, jobdata, datazilla, datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%S"))
             self.cursor.execute(
                 "insert into jobs(email, build, label, jobtype, jobdata, "
                 "datazilla, status, started) "
@@ -367,28 +361,32 @@ Status:    %(status)s
         # latest url.
         buildurl = None
         re_builds = re.compile(r"firefox-([0-9]+).*\.win32\.installer\.exe")
-        httplib = httplib2.Http();
+
+        # TODO: JMAHER: find a way to get the proxy automatically (env, settings.ini, cli, etc.)
+        proxy = urllib2.ProxyHandler({'http': 'proxy.dmz.scl3.mozilla.com:3128'})
+        opener = urllib2.build_opener(proxy)
+        urllib2.install_opener(opener)
 
         if not build.endswith("/"):
             # direct url to a build implies the build is available now.
             buildurl = build
         else:
             try:
-                builddir_resp, builddir_content = httplib.request(build, "GET")
-                if builddir_resp.status == 200:
-                    builddir_soup = BeautifulSoup.BeautifulSoup(builddir_content)
-                    for build_link in builddir_soup.findAll("a"):
-                        match = re_builds.match(build_link.get("href"))
-                        if match:
-                            buildurl = "%s%s" % (build, build_link.get("href"))
+                builddir_content = urllib2.urlopen(build).read()
+                builddir_soup = BeautifulSoup(builddir_content)
+                for build_link in builddir_soup.findAll("a"):
+                    match = re_builds.match(build_link.get("href"))
+                    if match:
+                        buildurl = "%s%s" % (build, build_link.get("href"))
             except:
-                # Which exceptions here? from httplib, BeautifulSoup
+                # Which exceptions here? from urllib2, BeautifulSoup
                 self.notify_admin_exception("Error checking build")
                 buildurl = None
 
         if buildurl:
-            buildurl_resp, buildurl_content = httplib.request(buildurl, "HEAD")
-            if buildurl_resp.status != 200:
+            try:
+                builddir_content = urllib2.urlopen(build).read()
+            except:
                 buildurl = None
 
         return buildurl
@@ -405,7 +403,6 @@ Status:    %(status)s
             raise
 
         if not jobrow:
-            print "JMAHER: no jobrow, returning early"
             return
 
         (jobid, email, build, label, jobtype, jobdata, datazilla,
@@ -440,7 +437,6 @@ Status:    %(status)s
             return
 
         #TODO: JMAHER: this used to be process_location, is this right?
-        print "JMAHER: call into process details!"
         self.process_details()
 
         self.job.status = "completed"
@@ -456,7 +452,13 @@ Status:    %(status)s
             if os.path.exists(self.firefoxpath):
                 os.unlink(self.firefoxpath)
 
-            urllib.urlretrieve(self.job.build, self.firefoxpath)
+            proxy = urllib2.ProxyHandler({'http': 'proxy.dmz.scl3.mozilla.com:3128'})
+            opener = urllib2.build_opener(proxy)
+            urllib2.install_opener(opener)
+            builddir_content = urllib2.urlopen(self.job.build).read()
+            with open(self.firefoxpath, 'wb') as f:
+                f.write(builddir_content)
+
         except IOError:
             self.notify_admin_exception("Error downloading build")
             self.notify_user_exception(self.job.email, "Error downloading build")

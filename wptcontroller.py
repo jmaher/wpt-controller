@@ -381,7 +381,7 @@ if __name__ == "__main__":
         html = powerhtml()
 
     try:
-        httpd = make_server("localhost", jm.port, application)
+        httpd = make_server("10.22.120.26", jm.port, application)
         httpd.serve_forever()
     except:
         jm.notify_admin_exception("Error in wsgi server",

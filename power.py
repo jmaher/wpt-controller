@@ -19,7 +19,6 @@ class PowerMonitor(JobMonitor):
                         pconfig["OS"]["Windows"][iter]["url"] = self.job.build
                     iter = iter + 1
                 json.dump(pconfig, f)
-                print "dumped out json: %s" % json.dump
                 return True
         except IOError:
             self.notify_admin_exception("Error writing file: %s" % self.powerconfig)
@@ -30,12 +29,9 @@ class PowerMonitor(JobMonitor):
     def process_details(self):
         """Submit jobs for this location for each speed and url.
         """
-#        self.logger.debug("process_details: %s" % jobdata)
-
         #TODO: we need to queue these up somehow- launch one at a time and make this serial
-        print "JMAHER: in process details going to launch benchmark.py"
-        p = subprocess.Popen(['python', 'benchmark.py', '--is_dispatcher'], cwd='/home/jmaher/mozilla/power_logger', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print "launched"
+        #TODO: JMAHER: we need to get cwd in from a config file
+        p = subprocess.Popen(['python3', 'benchmark.py', '--is_dispatcher'], cwd='/home/mozauto/power_logger', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print p.communicate()[0]
 
     def process_test_results(self, location, test_speed_map, test_url_map,
@@ -82,9 +78,10 @@ class PowerMonitor(JobMonitor):
 
         result = DatazillaResult()
         result.add_testsuite(suite_name)
+        #TODO: JMAHER: hardcoded microperf here, this project should be in a config file and a real name
         request = DatazillaRequest("https",
                                    "datazilla.mozilla.org",
-                                   "webpagetest",
+                                   "microperf",
                                    self.oauth_key,
                                    self.oauth_secret,
                                    machine_name=machine_name,
@@ -162,14 +159,11 @@ def main():
 
     jm = PowerMonitor(options)
 
-    print "JMAHER: top of the world"
     try:
         while True:
             jm.check_automatic_jobs()
-            print "JMAHER: going to check on waiting jobs"
             jm.check_waiting_jobs()
             jm.check_running_jobs()
-            print "JMAHER: going to process_job!"
             jm.process_job()
             time.sleep(jm.sleep_time)
     except:

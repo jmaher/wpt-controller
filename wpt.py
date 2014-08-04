@@ -343,6 +343,7 @@ class WPTMonitor(JobMonitor):
         # leave protocol in the url in order to distinguish http vs https.
         first_name = wpt_data["url"][:252] + ":fv"
         repeat_name = wpt_data["url"][:252] + ":rv"
+
         result = DatazillaResult()
         result.add_testsuite(suite_name)
         result.add_test_results(suite_name, first_name, wpt_data["firstView"]["SpeedIndex"])

@@ -87,7 +87,7 @@ class PowerMonitor(JobMonitor):
             machine_name = "perf-windows-003"
             os_name = "Win"
             browsername = browser
-            if browsername = "Internet Explorer":
+            if browsername == "Internet Explorer":
                 browsrename = "IE"
             os_version = "7 - %s" % browsername
             platform = "x86"

@@ -65,6 +65,7 @@ def application(environ, start_response):
             label = d.get("label", [""])[0]
             jobtype = d.get("jobtype", [""])[0]
             jobdata = d.get("jobdata", [""])[0]
+            datazilla = d.get("datazilla", [""])[0]
         except:
             d = parse_qs(request_body)
             email = d.get("email", [""])[0]
@@ -72,6 +73,7 @@ def application(environ, start_response):
             label = d.get("label", [""])[0]
             jobtype = d.get("jobtype", [""])[0]
             jobdata = d.get("jobdata", [""])[0]
+            datazilla = d.get("datazilla", [""])[0]
 
         # Always escape user input to avoid script injection
         email = escape(email.strip())

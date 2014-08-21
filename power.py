@@ -68,21 +68,35 @@ class PowerMonitor(JobMonitor):
             # before returning.
             submit_results = True
 
-        print "JMAHER:  inside post_to_datazilla, submit_results: %s" % submit_results
+        with open('/home/mozauto/power_logger/report.csv', 'r') as fHandle:
+            data = fHandle.readlines()
 
-        result = DatazillaResult()
-        suite_name = "PowerGadget"
-        machine_name = "perf-windows-003"
-        os_name = "Win7"
-        os_version = "7"
-        platform = "Windows"
-        print "JMAHER: created DatazillaResult"
+        header = True
+        browsers = []
+        for line in data:
+            if header:
+                header = False
+                continue
+            parts = line.split(',')
+            if parts[1] not in browsers:
+                browsers.append(parts[1])
+
+        for browser in browsers:
+            result = DatazillaResult()
+            suite_name = "PowerGadget"
+            machine_name = "perf-windows-003"
+            os_name = "Win"
+            browsername = browser
+            if browsername = "Internet Explorer":
+                browsrename = "IE"
+            os_version = "7 - %s" % browsername
+            platform = "x86"
         
-        result.add_testsuite(suite_name)
-        #TODO: JMAHER: hardcoded microperf here, this project should be in a config file and a real name
-        request = DatazillaRequest("https",
+            result.add_testsuite(suite_name)
+            #TODO: JMAHER: hardcoded microperf here, this project should be in a config file and a real name
+            request = DatazillaRequest("https",
                                    "datazilla.mozilla.org",
-                                   "microperf",
+                                   "power",
                                    self.oauth_key,
                                    self.oauth_secret,
                                    machine_name=machine_name,
@@ -95,28 +109,24 @@ class PowerMonitor(JobMonitor):
                                    branch=self.build_branch,
                                    id=self.build_id)
 
-        with open('/home/mozauto/power_logger/report.csv', 'r') as fHandle:
-            data = fHandle.readLines()
+            header = True
+            for line in data:
+                if header:
+                    header = False
+                    continue
+                parts = line.split(',')
 
-        for line in data:
-            result.add_test_results(suite_name, line[12], line[13])
+                #Skip data from other browsers
+                if parts[1] != browser:
+                    continue
 
-        print "JMAHER: created datazilla request!"
-        request.add_datazilla_result(result)
-        datasets = request.datasets()
-        for dataset in datasets:
-            if not submit_results:
-                continue
-            response = request.send(dataset)
-            # print error responses
-            if response.status != 200:
-                # use lower-case string because buildbot is sensitive to upper case error
-                # as in 'INTERNAL SERVER ERROR'
-                # https://bugzilla.mozilla.org/show_bug.cgi?id=799576
-                reason = response.reason.lower()
-            else:
-                res = response.read()
-        return datasets
+                result.add_test_results(suite_name, parts[13], [str(parts[14])])
+                print "JMAHER: added data: %s: %s = %s, %s" % (os_version, suite_name, parts[13], [str(parts[14])])            
+
+            request.add_datazilla_result(result)
+            responses = request.submit()
+            for resp in responses:
+                print 'server response: %d %s %s' % (resp.status, resp.reason, resp.read())
 
 #TODO: JMAHER: figure out a cleaner way to do this for wpt and power
 def main():
